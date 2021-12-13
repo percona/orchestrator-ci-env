@@ -2,13 +2,15 @@
 
 REPORT_HOSTNAME=${REPORT_HOSTNAME:-127.0.0.1}
 
+script/download-mysql
 script/run-consul
 script/deploy-replication "$REPORT_HOSTNAME"
 script/run-haproxy
 script/run-consul-template
 script/run-heartbeat
 
-PATH=$PATH:~/opt/mysql/5.7.26/bin/
+mysql_bin_dir=(~/opt/mysql/*/bin)
+PATH=$mysql_bin_dir:$PATH
 
 mysql -uci -pci -h 127.0.0.1 --port 10111 -s -s -e "select @@report_port"
 mysql -uci -pci -h 127.0.0.1 --port 13306 -s -s -e "select @@report_port"
