@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Download PS tarball. Comment it out if direct copy is done in Dockerfile.system
+
+if [[ -z "${TARBALL_URL}" ]]; then
+  echo Downloading tarball skipped. Will use bundled one.
+else
+  mkdir mysql-tarballs-downloaded
+  pushd mysql-tarballs-downloaded
+  wget ${TARBALL_URL}
+  popd
+fi
