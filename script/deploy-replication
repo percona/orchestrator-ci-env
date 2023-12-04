@@ -17,7 +17,7 @@ else
 fi
 
 extra=''
-if [ $(echo $tar_file | cut -d'-' -f1) == "ps" ]; then
+if [ $(echo $tar_file | rev | cut -d'/' -f1 | rev | cut -d'-' -f1) == "ps" ]; then
 	extra="--flavor Percona"
 fi
 mkdir -p ~/opt/mysql
