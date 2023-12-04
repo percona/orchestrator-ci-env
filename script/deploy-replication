@@ -16,6 +16,7 @@ else
   tar_file=(mysql-tarballs/*)
 fi
 
+extra=''
 if [ $(echo $tar_file | cut -d'-' -f1) == "ps" ]; then
 	extra="--flavor Percona"
 fi
