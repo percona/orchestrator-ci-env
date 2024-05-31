@@ -1,7 +1,6 @@
 #!/bin/bash
-
 REPORT_HOSTNAME=${1:-127.0.0.1}
-
+set -x
 sudo mkdir -p /etc/dbdeployer
 
 ~/sandboxes/ci/stop_all || :
@@ -36,17 +35,40 @@ else
   rpl_timeout_option=rpl_semi_sync_master_timeout
 fi
 
+# native auth plugin option
+if [[ "$version" < "8.4.0" ]] ; then
+  native_auth_plugin_option=--native-auth-plugin
+  change_master_options_option="MASTER_CONNECT_RETRY=1;MASTER_RETRY_COUNT=3600;MASTER_HEARTBEAT_PERIOD=1"
+  log_slave_updates_option="log_slave_updates"
+  slave_net_timeout_option="slave_net_timeout=2"
+  repl_crash_save_option=--repl-crash-safe
+  dbdeployer_bin=bin/linux/dbdeployer
+else
+  native_auth_plugin_option=--my-cnf-options=mysql-native-password=ON
+  change_master_options_option="SOURCE_CONNECT_RETRY=1;SOURCE_RETRY_COUNT=3600;SOURCE_HEARTBEAT_PERIOD=1"
+  log_slave_updates_option="log_replica_updates"
+  slave_net_timeout_option="replica_net_timeout=2"
+  repl_crash_save_option=
+  dbdeployer_bin=bin/linux/dbdeployer84
+fi
+
+
+
 echo source_plugin: $source_plugin
 echo replica_plugin: $replica_plugin
 echo rpl_timeout_option: $rpl_timeout_option
+echo native_auth_plugin_option: $native_auth_plugin_option
+echo change_master_options_option: $change_master_options_option
+echo log_slave_updates_option: $log_slave_updates_option
+echo slave_net_timeout_option: $slave_net_timeout_option
+echo repl_crash_save_option: $repl_crash_save_option
 
-bin/linux/dbdeployer deploy replication $version \
+$dbdeployer_bin deploy replication $version \
   --sandbox-directory="ci" \
   --base-port=10110 \
-  --native-auth-plugin \
   -n 4 \
-  --gtid \
-  --repl-crash-safe \
+  $native_auth_plugin_option \
+  "--gtid" \
   --pre-grants-sql="create user if not exists ci@'%' identified by 'ci'" \
   --pre-grants-sql="grant all on *.* to ci@'%'" \
   --pre-grants-sql="create user if not exists heartbeat@'%' identified by 'heartbeat'" \
@@ -54,17 +76,16 @@ bin/linux/dbdeployer deploy replication $version \
   --my-cnf-options="report_host=$REPORT_HOSTNAME" \
   --my-cnf-options="bind_address=0.0.0.0" \
   --my-cnf-options="log_bin" \
-  --my-cnf-options="log_slave_updates" \
+  --my-cnf-options="$log_slave_updates_option" \
   --my-cnf-options="performance_schema=0" \
   --my-cnf-options="innodb_buffer_pool_size=32M" \
-  --my-cnf-options="slave_net_timeout=2" \
+  --my-cnf-options="$slave_net_timeout_option" \
   --my-cnf-options="read_only=1" \
   --my-cnf-options="plugin-load-add=$source_plugin" \
   --my-cnf-options="plugin-load-add=$replica_plugin" \
   --my-cnf-options="$rpl_timeout_option=60000" \
-  --change-master-options="MASTER_CONNECT_RETRY=1" \
-  --change-master-options="MASTER_RETRY_COUNT=3600" \
-  --change-master-options="MASTER_HEARTBEAT_PERIOD=1"
+  --change-master-options="$change_master_options_option"
+
 ~/sandboxes/ci/m -e "set global read_only=0"
 
 consul kv put "mysql/master/ci/hostname" "127.0.0.1"
