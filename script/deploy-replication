@@ -15,8 +15,12 @@ else
   tar_file=(mysql-tarballs/*)
 fi
 
+extra=''
+if [ $(echo $tar_file | rev | cut -d'/' -f1 | rev | cut -d'-' -f1) == "ps" ]; then
+	extra="--flavor Percona"
+fi
 mkdir -p ~/opt/mysql
-bin/linux/dbdeployer unpack $tar_file
+bin/linux/dbdeployer unpack $tar_file $extra
 
 pushd ~/opt/mysql
 version=(*)
