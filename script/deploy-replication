@@ -38,14 +38,14 @@ fi
 # native auth plugin option
 if [[ "$version" < "8.4.0" ]] ; then
   native_auth_plugin_option=--native-auth-plugin
-  change_master_options_option="MASTER_CONNECT_RETRY=1;MASTER_RETRY_COUNT=3600;MASTER_HEARTBEAT_PERIOD=1"
+  change_master_options_option="MASTER_CONNECT_RETRY=1,MASTER_RETRY_COUNT=3600,MASTER_HEARTBEAT_PERIOD=1"
   log_slave_updates_option="log_slave_updates"
   slave_net_timeout_option="slave_net_timeout=2"
   repl_crash_save_option=--repl-crash-safe
   dbdeployer_bin=bin/linux/dbdeployer
 else
-  native_auth_plugin_option=--my-cnf-options=mysql-native-password=ON
-  change_master_options_option="SOURCE_CONNECT_RETRY=1;SOURCE_RETRY_COUNT=3600;SOURCE_HEARTBEAT_PERIOD=1"
+  native_auth_plugin_option=
+  change_master_options_option="SOURCE_CONNECT_RETRY=1,SOURCE_RETRY_COUNT=3600,SOURCE_HEARTBEAT_PERIOD=1"
   log_slave_updates_option="log_replica_updates"
   slave_net_timeout_option="replica_net_timeout=2"
   repl_crash_save_option=
